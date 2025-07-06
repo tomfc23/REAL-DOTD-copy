@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Karma Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      margin: 10px 0;
+      padding: 6px;
+    }
+    #total {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Karma Tracker</h2>
+
+  <label for="dateInput">Select Date:</label>
+  <input type="date" id="dateInput" />
+
+  <br>
+  <button onclick="fetchKarmaData()">Refresh</button>
+
+  <div id="total">Total: --</div>
+
+  <script>
+    async function fetchKarmaData() {
+      const dateInput = document.getElementById('dateInput').value;
+      const output = document.getElementById('total');
+
+      if (!dateInput) {
+        output.innerText = "Please select a date.";
+        return;
+      }
+
+      const selectedDate = new Date(dateInput).toISOString().split('T')[0];
+
+      try {
+        const url = 'https://api.real.vg/user/kvMxwB6J/karmafeed';
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const response = await axios.get(proxyUrl);
+        const data = JSON.parse(response.data.contents);
+
+        let total = 0;
+
+        if (Array.isArray(data.items)) {
+          data.items.forEach(item => {
+            const itemDate = new Date(item.createdAt).toISOString().split('T')[0];
+            if (itemDate === selectedDate && typeof item.amount === 'number') {
+              total += item.amount;
+            }
+          });
+        }
+
+        output.innerText = `Total Karma on ${selectedDate}: ${total}`;
+      } catch (err) {
+        output.innerText = "Error fetching data.";
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
