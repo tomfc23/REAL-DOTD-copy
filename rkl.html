@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Karma Sum by Date</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Karma Tracker (Custom 11:00 GMT Day)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker - tomfc</h2>
+  <h2>Karma Tracker tomfc2</h2>
 
   <label for="dateInput">Select Date:</label>
   <input type="date" id="dateInput" />
@@ -41,7 +41,12 @@
         return;
       }
 
-      const selectedDate = new Date(dateInput).toISOString().split('T')[0];
+      // Start at 11:00:00 GMT of selected date
+      const start = new Date(`${dateInput}T11:00:00.000Z`);
+      // End at 10:59:59.999 GMT the next day
+      const end = new Date(start);
+      end.setUTCDate(end.getUTCDate() + 1);
+      end.setUTCHours(10, 59, 59, 999);
 
       try {
         const apiUrl = 'https://api.real.vg/user/Gv1Ajxrv/karmafeed';
@@ -53,14 +58,18 @@
 
         if (Array.isArray(data.items)) {
           for (const item of data.items) {
-            const itemDate = new Date(item.createdAt).toISOString().split('T')[0];
-            if (itemDate === selectedDate && typeof item.amount === 'number') {
+            const itemDate = new Date(item.createdAt);
+            if (
+              itemDate >= start &&
+              itemDate <= end &&
+              typeof item.amount === 'number'
+            ) {
               total += item.amount;
             }
           }
         }
 
-        output.innerText = `Total Karma on ${selectedDate}: ${total}`;
+        output.innerText = `Total Karma from ${start.toISOString().slice(0, 16).replace('T', ' ')} to ${end.toISOString().slice(0, 16).replace('T', ' ')} GMT: ${total}`;
       } catch (err) {
         output.innerText = "Error fetching data.";
         console.error(err);
