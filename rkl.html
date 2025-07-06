@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker lanky 2.0</h2>
+  <h2>Karma Tracker lanky 2.1</h2>
 
   <button onclick="fetchKarmaDelta()">Refresh</button>
 
@@ -37,14 +37,15 @@
         const response = await axios.get(proxyUrl);
         const data = JSON.parse(response.data.contents);
 
-        output.innerText = `Today's Karma Delta (${data.karmaDeltaDay}): ${data.karmaDelta}`;
+        // Show today's karma delta using nested stats object
+        output.innerText = `Today's Karma Delta (${data.stats.karmaDeltaDay}): ${data.stats.karmaDelta}`;
       } catch (err) {
         output.innerText = "Error fetching data.";
         console.error(err);
       }
     }
 
-    // Automatically fetch on page load
+    // Fetch immediately on page load
     fetchKarmaDelta();
   </script>
 </body>
