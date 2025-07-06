@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Karma Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karma Sum by Date</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
@@ -12,16 +12,16 @@
     }
     input, button {
       margin: 10px 0;
-      padding: 6px;
+      padding: 6px 10px;
     }
-    #total {
+    #result {
       margin-top: 20px;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h2>Karma Tracker 1.0</h2>
+  <h2>Karma Tracker</h2>
 
   <label for="dateInput">Select Date:</label>
   <input type="date" id="dateInput" />
@@ -29,12 +29,12 @@
   <br>
   <button onclick="fetchKarmaData()">Refresh</button>
 
-  <div id="total">Total: --</div>
+  <div id="result">Total: --</div>
 
   <script>
     async function fetchKarmaData() {
       const dateInput = document.getElementById('dateInput').value;
-      const output = document.getElementById('total');
+      const output = document.getElementById('result');
 
       if (!dateInput) {
         output.innerText = "Please select a date.";
@@ -44,20 +44,20 @@
       const selectedDate = new Date(dateInput).toISOString().split('T')[0];
 
       try {
-        const url = 'https://api.real.vg/user/4JZAKoZn/karmafeed';
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const apiUrl = 'https://api.real.vg/user/4JZAKoZn/karmafeed';
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
         const response = await axios.get(proxyUrl);
         const data = JSON.parse(response.data.contents);
 
         let total = 0;
 
         if (Array.isArray(data.items)) {
-          data.items.forEach(item => {
+          for (const item of data.items) {
             const itemDate = new Date(item.createdAt).toISOString().split('T')[0];
             if (itemDate === selectedDate && typeof item.amount === 'number') {
               total += item.amount;
             }
-          });
+          }
         }
 
         output.innerText = `Total Karma on ${selectedDate}: ${total}`;
