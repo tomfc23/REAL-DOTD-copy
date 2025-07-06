@@ -72,16 +72,19 @@
         // Prepare array of promises for active users
         const karmaPromises = users.map(async user => {
           if (user['playing?'].toLowerCase() === 'yes') {
-            const karma = await fetchKarmaForUser(user['user id']);
-            if (karma !== null) {
-              return `@${user['user @']}: ${karma}`;
-            } else {
-              return `@${user['user @']}: error fetching karma`;
-            }
-          } else {
-            return `@${user['user @']}: not active`;
-          }
-        });
+            const karmaPromises = users.map(async user => {
+  if (user['playing?'].toLowerCase() === 'yes') {
+    const karma = await fetchKarmaForUser(user['user id']);
+    if (karma !== null) {
+      return `${user['user @']}: ${karma}`;  // removed extra @ here
+    } else {
+      return `${user['user @']}: error fetching karma`; // removed extra @ here too
+    }
+  } else {
+    return `${user['user @']}: not active`; // removed extra @ here as well
+  }
+});
+
 
         // Wait for all karma fetches to finish
         const results = await Promise.all(karmaPromises);
