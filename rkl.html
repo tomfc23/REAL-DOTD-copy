@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lean Team Score</title>
+  <title>Leanteam Karma</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
@@ -31,7 +31,7 @@
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4C2Ms1g8iyZwp1oh8qggiMKH9mWijCOeSb5uLrwio8Xm-Ij4f-jNsZbDYLk6DZAww_AtBlFQ81rzq/pub?output=csv';
 
-    // Helper: parse CSV text into array of objects (simple CSV parser for this case)
+    // Helper: parse CSV text into array of objects (simple CSV parser)
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       const headers = lines[0].split(',').map(h => h.trim());
@@ -69,27 +69,22 @@
 
         output.innerText = 'Fetching karma data...\n';
 
-        // Prepare array of promises for active users
+        // Map once over users to get karma or not active
         const karmaPromises = users.map(async user => {
           if (user['playing?'].toLowerCase() === 'yes') {
-            const karmaPromises = users.map(async user => {
-  if (user['playing?'].toLowerCase() === 'yes') {
-    const karma = await fetchKarmaForUser(user['user id']);
-    if (karma !== null) {
-      return `${user['user @']}: ${karma}`;  // removed extra @ here
-    } else {
-      return `${user['user @']}: error fetching karma`; // removed extra @ here too
-    }
-  } else {
-    return `${user['user @']}: not active`; // removed extra @ here as well
-  }
-});
+            const karma = await fetchKarmaForUser(user['user id']);
+            if (karma !== null) {
+              return `${user['user @']}: ${karma}`;
+            } else {
+              return `${user['user @']}: error fetching karma`;
+            }
+          } else {
+            return `${user['user @']}: not active`;
+          }
+        });
 
-
-        // Wait for all karma fetches to finish
         const results = await Promise.all(karmaPromises);
 
-        // Show results, each on its own line
         output.innerText = results.join('\n');
       } catch (err) {
         output.innerText = 'Error loading users or karma data.';
