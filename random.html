@@ -1,0 +1,112 @@
+<script>
+  // Hardcoded latest known pool ID
+  let latestKnownPoolId = 1055; // ← Update this value manually as needed
+
+  function log(msg) {
+    const logEl = document.getElementById('log');
+    logEl.textContent += msg + '\n';
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log(msg);
+  }
+
+  async function getPoolById(id) {
+    try {
+      const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${id}`)}`;
+      const response = await axios.get(url);
+      return JSON.parse(response.data.contents);
+    } catch (e) {
+      log(`Failed to fetch pool ID ${id}: ${e.message}`);
+      return null;
+    }
+  }
+
+  async function findAndLoadPool() {
+    const selectedSport = document.getElementById('sport').value;
+    const selectedDate = document.getElementById('date').value;
+    const container = document.getElementById('poll-container');
+    const sportInfo = document.getElementById('sport-info');
+    const gameCountInfo = document.getElementById('game-count-info');
+    const logEl = document.getElementById('log');
+
+    logEl.textContent = ''; // clear log
+    container.innerHTML = 'Searching for matching pool...';
+    sportInfo.innerHTML = '';
+    gameCountInfo.innerHTML = '';
+
+    if (!selectedSport || !selectedDate) {
+      container.innerHTML = 'Please select both sport and date.';
+      return;
+    }
+
+    let currentId = latestKnownPoolId;
+    let foundPool = null;
+    let attempts = 0;
+    const maxAttempts = 50;
+
+    log(`Using latestKnownPoolId: ${latestKnownPoolId}`);
+
+    while (attempts < maxAttempts && currentId > 0) {
+      log(`Checking pool ID ${currentId}...`);
+      const poolData = await getPoolById(currentId);
+      if (poolData && poolData.pool) {
+        const pool = poolData.pool;
+        log(`Pool sport='${pool.sport}', day='${pool.day}'`);
+        log(`Comparing to selectedSport='${selectedSport}', selectedDate='${selectedDate}'`);
+
+        if (
+          pool.sport.toLowerCase() === selectedSport.toLowerCase() &&
+          pool.day === selectedDate
+        ) {
+          foundPool = poolData;
+          log(`Match found at pool ID ${currentId}`);
+          break;
+        }
+      } else {
+        log(`No valid pool data for ID ${currentId}`);
+      }
+      currentId--;
+      attempts++;
+    }
+
+    if (!foundPool) {
+      container.innerHTML = 'No pool found for that sport and date.';
+      return;
+    }
+
+    displayPool(foundPool);
+  }
+
+  function displayPool(data) {
+    const container = document.getElementById('poll-container');
+    const sportInfo = document.getElementById('sport-info');
+    const gameCountInfo = document.getElementById('game-count-info');
+
+    const pool = data.pool;
+    const polls = pool.polls;
+    const totalGames = polls.length;
+
+    sportInfo.innerText = `Sport: ${pool.sport.toUpperCase()}`;
+    gameCountInfo.innerText = `Total Games: ${totalGames}`;
+    container.innerHTML = '';
+
+    polls.forEach((pollWrapper, index) => {
+      const poll = pollWrapper.poll;
+      const options = poll.options;
+      const totalVotes = options.reduce((sum, o) => sum + o.count, 0);
+
+      let gameHTML = `<div class="game-block"><div class="game-title">Game ${index + 1}</div>`;
+
+      options.forEach(option => {
+        const percent = totalVotes > 0 ? Math.round((option.count / totalVotes) * 100) : 0;
+        gameHTML += `
+          <div class="poll-item">
+            ${option.label}: ${percent}% (${option.count} votes)
+          </div>
+        `;
+      });
+
+      gameHTML += `</div>`;
+      container.innerHTML += gameHTML;
+    });
+  }
+</script>
