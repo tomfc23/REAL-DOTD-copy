@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker</h2>
+  <h2>Karma Tracker 1.0</h2>
 
   <label for="dateInput">Select Date:</label>
   <input type="date" id="dateInput" />
@@ -44,7 +44,7 @@
       const selectedDate = new Date(dateInput).toISOString().split('T')[0];
 
       try {
-        const url = 'https://api.real.vg/user/kvMxwB6J/karmafeed';
+        const url = 'https://api.real.vg/user/4JZAKoZn/karmafeed';
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         const response = await axios.get(proxyUrl);
         const data = JSON.parse(response.data.contents);
