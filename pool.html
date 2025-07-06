@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Poll Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .game-section {
+      margin-bottom: 30px;
+    }
+    .poll-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .poll-item {
+      margin-left: 10px;
+      margin-bottom: 5px;
+    }
+    button {
+      margin-bottom: 20px;
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="fetchAllPolls()">Refresh All</button>
+  <div id="polls-container">Loading...</div>
+
+  <script>
+    const pollIds = [263461, 263479, 263470, 263482];
+
+    async function fetchPoll(pollId) {
+      const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
+      return JSON.parse(response.data.contents);
+    }
+
+    function renderPoll(pollData, gameNumber) {
+      const options = pollData.poll.options;
+      const totalVotes = options.reduce((sum, opt) => sum + opt.count, 0);
+
+      const pollHtml = `
+        <div class="game-section">
+          <div class="poll-title">Game ${gameNumber}</div>
+          ${options.map(opt => {
+            const percent = totalVotes ? Math.round((opt.count / totalVotes) * 100) : 0;
+            return `<div class="poll-item">${opt.label} — ${percent}% (${opt.count} votes)</div>`;
+          }).join('')}
+        </div>
+      `;
+      return pollHtml;
+    }
+
+    async function fetchAllPolls() {
+      const container = document.getElementById("polls-container");
+      container.innerHTML = "Loading...";
+      try {
+        const pollDataList = await Promise.all(pollIds.map(id => fetchPoll(id)));
+        const html = pollDataList.map((data, i) => renderPoll(data, i + 1)).join('');
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = "Error loading polls: " + err.message;
+      }
+    }
+
+    // Initial load
+    fetchAllPolls();
+  </script>
+</body>
+</html>
