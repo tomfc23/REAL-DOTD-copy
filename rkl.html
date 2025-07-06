@@ -74,12 +74,12 @@
           if (user['playing?'].toLowerCase() === 'yes') {
             const karma = await fetchKarmaForUser(user['user id']);
             if (karma !== null) {
-              return `@${user['user ']}: ${karma}`;
+              return `@${user['user @']}: ${karma}`;
             } else {
-              return `@${user['user ']}: error fetching karma`;
+              return `@${user['user @']}: error fetching karma`;
             }
           } else {
-            return `@${user['user ']}: not active`;
+            return `@${user['user @']}: not active`;
           }
         });
 
