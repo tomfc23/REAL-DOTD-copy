@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Karma Tracker (Custom 11:00 GMT Day)</title>
+  <title>Karma Tracker (karmaDelta)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
@@ -21,18 +21,18 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker lanky 2.0</h2>
+  <h2>Karma Tracker lanky</h2>
 
   <label for="dateInput">Select Date:</label>
   <input type="date" id="dateInput" />
 
   <br>
-  <button onclick="fetchKarmaData()">Refresh</button>
+  <button onclick="fetchKarmaDelta()">Refresh</button>
 
   <div id="result">Total: --</div>
 
   <script>
-    async function fetchKarmaData() {
+    async function fetchKarmaDelta() {
       const dateInput = document.getElementById('dateInput').value;
       const output = document.getElementById('result');
 
@@ -41,47 +41,17 @@
         return;
       }
 
-      const start = new Date(`${dateInput}T11:00:00.000Z`);
-      const end = new Date(start);
-      end.setUTCDate(end.getUTCDate() + 1);
-      end.setUTCHours(10, 59, 59, 999);
-
       try {
         const apiUrl = 'https://api.real.vg/user/R3XzNjMJ/karmafeed';
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
         const response = await axios.get(proxyUrl);
         const data = JSON.parse(response.data.contents);
 
-        let total = 0;
-        let matchedCount = 0;
-
-        if (Array.isArray(data.items)) {
-          for (const item of data.items) {
-            const itemDate = new Date(item.createdAt);
-            const amount = Number(item.amount);
-
-            const inRange = itemDate >= start && itemDate <= end;
-            const isValid = !isNaN(amount);
-
-            console.log({
-              createdAt: item.createdAt,
-              parsedDate: itemDate.toISOString(),
-              amount: item.amount,
-              parsedAmount: amount,
-              inRange,
-              included: inRange && isValid
-            });
-
-            if (isValid && inRange) {
-              total += amount;
-              matchedCount++;
-            }
-          }
+        if (data.karmaDeltaDay === dateInput) {
+          output.innerText = `Karma Delta on ${dateInput}: ${data.karmaDelta}`;
+        } else {
+          output.innerText = `No karmaDelta reported for ${dateInput}.`;
         }
-
-        output.innerText =
-          `Total Karma from ${start.toISOString().slice(0, 16).replace('T', ' ')} ` +
-          `to ${end.toISOString().slice(0, 16).replace('T', ' ')} GMT: ${total} (${matchedCount} items)`;
       } catch (err) {
         output.innerText = "Error fetching data.";
         console.error(err);
