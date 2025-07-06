@@ -3,72 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Poll Viewer</title>
+  <title>Pool Poll Viewer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      padding: 20px;
     }
-    .game-section {
-      margin-bottom: 30px;
-    }
-    .poll-title {
-      font-weight: bold;
+    h1 {
       margin-bottom: 10px;
     }
-    .poll-item {
-      margin-left: 10px;
+    .controls {
+      margin-bottom: 20px;
+    }
+    .meta-info {
+      margin-bottom: 20px;
+    }
+    .game-block {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    .game-title {
+      font-weight: bold;
+      font-size: 18px;
       margin-bottom: 5px;
     }
+    .poll-item {
+      margin-left: 20px;
+    }
     button {
-      margin-bottom: 20px;
       padding: 6px 12px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <button onclick="fetchAllPolls()">Refresh All</button>
-  <div id="polls-container">Loading...</div>
+
+  <h1>Pool Poll Viewer 1.0</h1>
+
+  <div class="controls">
+    <label for="sport">Sport:</label>
+    <select id="sport">
+      <option value="mlb">MLB</option>
+      <option value="wnba">WNBA</option>
+      <!-- Add more if needed -->
+    </select>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+
+    <button onclick="findAndLoadPool()">Load Pool</button>
+  </div>
+
+  <div class="meta-info">
+    <div id="sport-info"></div>
+    <div id="game-count-info"></div>
+  </div>
+
+  <div id="poll-container">Waiting for input...</div>
 
   <script>
-    const pollIds = [263461, 263479, 263470, 263482];
+    let latestKnownPoolId = 1003; // Can update to a more recent known ID
 
-    async function fetchPoll(pollId) {
-      const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
-      return JSON.parse(response.data.contents);
-    }
-
-    function renderPoll(pollData, gameNumber) {
-      const options = pollData.poll.options;
-      const totalVotes = options.reduce((sum, opt) => sum + opt.count, 0);
-
-      const pollHtml = `
-        <div class="game-section">
-          <div class="poll-title">Game ${gameNumber}</div>
-          ${options.map(opt => {
-            const percent = totalVotes ? Math.round((opt.count / totalVotes) * 100) : 0;
-            return `<div class="poll-item">${opt.label} — ${percent}% (${opt.count} votes)</div>`;
-          }).join('')}
-        </div>
-      `;
-      return pollHtml;
-    }
-
-    async function fetchAllPolls() {
-      const container = document.getElementById("polls-container");
-      container.innerHTML = "Loading...";
+    async function getPoolById(id) {
       try {
-        const pollDataList = await Promise.all(pollIds.map(id => fetchPoll(id)));
-        const html = pollDataList.map((data, i) => renderPoll(data, i + 1)).join('');
-        container.innerHTML = html;
-      } catch (err) {
-        container.innerHTML = "Error loading polls: " + err.message;
+        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${id}`)}`;
+        const response = await axios.get(url);
+        return JSON.parse(response.data.contents);
+      } catch {
+        return null;
       }
     }
 
-    // Initial load
-    fetchAllPolls();
+    async function findAndLoadPool() {
+      const selectedSport = document.getElementById('sport').value;
+      const selectedDate = document.getElementById('date').value;
+      const container = document.getElementById('poll-container');
+      const sportInfo = document.getElementById('sport-info');
+      const gameCountInfo = document.getElementById('game-count-info');
+
+      if (!selectedSport || !selectedDate) {
+        container.innerHTML = 'Please select both sport and date.';
+        return;
+      }
+
+      container.innerHTML = 'Searching for matching pool...';
+      sportInfo.innerHTML = '';
+      gameCountInfo.innerHTML = '';
+
+      let currentId = latestKnownPoolId;
+      let foundPool = null;
+      let attempts = 0;
+
+      // Try up to 20 pools going backward
+      while (attempts < 20 && currentId > 0) {
+        const poolData = await getPoolById(currentId);
+        if (poolData && poolData.pool) {
+          const pool = poolData.pool;
+          if (pool.sport === selectedSport && pool.day === selectedDate) {
+            foundPool = poolData;
+            break;
+          }
+        }
+        currentId--;
+        attempts++;
+      }
+
+      if (!foundPool) {
+        container.innerHTML = 'No pool found for that sport and date.';
+        return;
+      }
+
+      displayPool(foundPool);
+    }
+
+    function displayPool(data) {
+      const container = document.getElementById('poll-container');
+      const sportInfo = document.getElementById('sport-info');
+      const gameCountInfo = document.getElementById('game-count-info');
+
+      const pool = data.pool;
+      const polls = pool.polls;
+      const totalGames = polls.length;
+
+      sportInfo.innerText = `Sport: ${pool.sport.toUpperCase()}`;
+      gameCountInfo.innerText = `Total Games: ${totalGames}`;
+      container.innerHTML = '';
+
+      polls.forEach((pollWrapper, index) => {
+        const poll = pollWrapper.poll;
+        const options = poll.options;
+        const totalVotes = options.reduce((sum, o) => sum + o.count, 0);
+
+        let gameHTML = `<div class="game-block"><div class="game-title">Game ${index + 1}</div>`;
+
+        options.forEach(option => {
+          const percent = totalVotes > 0 ? Math.round((option.count / totalVotes) * 100) : 0;
+          gameHTML += `
+            <div class="poll-item">
+              ${option.label}: ${percent}% (${option.count} votes)
+            </div>
+          `;
+        });
+
+        gameHTML += `</div>`;
+        container.innerHTML += gameHTML;
+      });
+    }
   </script>
+
 </body>
 </html>
