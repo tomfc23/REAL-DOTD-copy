@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Karma Tracker (karmaDelta)</title>
+  <title>Karma Tracker (Today)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    input, button {
+    button {
       margin: 10px 0;
       padding: 6px 10px;
     }
@@ -21,25 +21,15 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker lanky</h2>
+  <h2>Karma Tracker lanky 2.0</h2>
 
-  <label for="dateInput">Select Date:</label>
-  <input type="date" id="dateInput" />
-
-  <br>
   <button onclick="fetchKarmaDelta()">Refresh</button>
 
-  <div id="result">Total: --</div>
+  <div id="result">Loading...</div>
 
   <script>
     async function fetchKarmaDelta() {
-      const dateInput = document.getElementById('dateInput').value;
       const output = document.getElementById('result');
-
-      if (!dateInput) {
-        output.innerText = "Please select a date.";
-        return;
-      }
 
       try {
         const apiUrl = 'https://api.real.vg/user/R3XzNjMJ/karmafeed';
@@ -47,16 +37,15 @@
         const response = await axios.get(proxyUrl);
         const data = JSON.parse(response.data.contents);
 
-        if (data.karmaDeltaDay === dateInput) {
-          output.innerText = `Karma Delta on ${dateInput}: ${data.karmaDelta}`;
-        } else {
-          output.innerText = `No karmaDelta reported for ${dateInput}.`;
-        }
+        output.innerText = `Today's Karma Delta (${data.karmaDeltaDay}): ${data.karmaDelta}`;
       } catch (err) {
         output.innerText = "Error fetching data.";
         console.error(err);
       }
     }
+
+    // Automatically fetch on page load
+    fetchKarmaDelta();
   </script>
 </body>
 </html>
