@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pool Poll Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pool Poll Viewer with Debug</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <style>
     body {
@@ -36,18 +36,29 @@
       padding: 6px 12px;
       font-size: 14px;
     }
+    #log {
+      white-space: pre-wrap;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Pool Poll Viewer 1.0</h1>
+  <h1>Pool Poll Viewer</h1>
 
   <div class="controls">
     <label for="sport">Sport:</label>
     <select id="sport">
       <option value="mlb">MLB</option>
+      <option value="nba">NBA</option>
       <option value="wnba">WNBA</option>
-      <!-- Add more if needed -->
+      <option value="nhl">NHL</option>
     </select>
 
     <label for="date">Date:</label>
@@ -63,15 +74,38 @@
 
   <div id="poll-container">Waiting for input...</div>
 
+  <h3>Debug Log:</h3>
+  <div id="log"></div>
+
   <script>
-    let latestKnownPoolId = 1003; // Can update to a more recent known ID
+const basePoolId = 1000;
+const baseDate = new Date('2025-07-01');
+
+function calculateLatestPoolId() {
+  const today = new Date();
+  const diffTime = today.getTime() - baseDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return basePoolId + diffDays * 5;
+}
+
+let latestKnownPoolId = calculateLatestPoolId();
+log(`Using latestKnownPoolId: ${latestKnownPoolId}`);
+
+
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      logEl.textContent += msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
+    }
 
     async function getPoolById(id) {
       try {
         const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${id}`)}`;
         const response = await axios.get(url);
         return JSON.parse(response.data.contents);
-      } catch {
+      } catch (e) {
+        log(`Failed to fetch pool ID ${id}: ${e.message}`);
         return null;
       }
     }
@@ -82,29 +116,35 @@
       const container = document.getElementById('poll-container');
       const sportInfo = document.getElementById('sport-info');
       const gameCountInfo = document.getElementById('game-count-info');
+      const logEl = document.getElementById('log');
+
+      logEl.textContent = ''; // clear log
+      container.innerHTML = 'Searching for matching pool...';
+      sportInfo.innerHTML = '';
+      gameCountInfo.innerHTML = '';
 
       if (!selectedSport || !selectedDate) {
         container.innerHTML = 'Please select both sport and date.';
         return;
       }
 
-      container.innerHTML = 'Searching for matching pool...';
-      sportInfo.innerHTML = '';
-      gameCountInfo.innerHTML = '';
-
       let currentId = latestKnownPoolId;
       let foundPool = null;
       let attempts = 0;
+      const maxAttempts = 50; // increase if needed
 
-      // Try up to 20 pools going backward
-      while (attempts < 20 && currentId > 0) {
+      while (attempts < maxAttempts && currentId > 0) {
+        log(`Checking pool ID ${currentId}...`);
         const poolData = await getPoolById(currentId);
         if (poolData && poolData.pool) {
-          const pool = poolData.pool;
-          if (pool.sport === selectedSport && pool.day === selectedDate) {
+          log(`Found pool with sport=${poolData.pool.sport} day=${poolData.pool.day}`);
+          if (poolData.pool.sport === selectedSport && poolData.pool.day === selectedDate) {
             foundPool = poolData;
+            log(`Match found at pool ID ${currentId}`);
             break;
           }
+        } else {
+          log(`No valid pool data for ID ${currentId}`);
         }
         currentId--;
         attempts++;
