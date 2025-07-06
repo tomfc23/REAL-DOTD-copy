@@ -78,19 +78,18 @@
   <div id="log"></div>
 
   <script>
-const basePoolId = 1000;
-const baseDate = new Date('2025-07-01');
+    // Auto-increment pool ID by 5 per day since baseDate & basePoolId
+    const basePoolId = 1000;
+    const baseDate = new Date('2025-07-01');
 
-function calculateLatestPoolId() {
-  const today = new Date();
-  const diffTime = today.getTime() - baseDate.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  return basePoolId + diffDays * 5;
-}
+    function calculateLatestPoolId() {
+      const today = new Date();
+      const diffTime = today.getTime() - baseDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return basePoolId + diffDays * 5;
+    }
 
-let latestKnownPoolId = calculateLatestPoolId();
-log(`Using latestKnownPoolId: ${latestKnownPoolId}`);
-
+    let latestKnownPoolId = calculateLatestPoolId();
 
     function log(msg) {
       const logEl = document.getElementById('log');
@@ -131,14 +130,22 @@ log(`Using latestKnownPoolId: ${latestKnownPoolId}`);
       let currentId = latestKnownPoolId;
       let foundPool = null;
       let attempts = 0;
-      const maxAttempts = 50; // increase if needed
+      const maxAttempts = 50;
+
+      log(`Using latestKnownPoolId: ${latestKnownPoolId}`);
 
       while (attempts < maxAttempts && currentId > 0) {
         log(`Checking pool ID ${currentId}...`);
         const poolData = await getPoolById(currentId);
         if (poolData && poolData.pool) {
-          log(`Found pool with sport=${poolData.pool.sport} day=${poolData.pool.day}`);
-          if (poolData.pool.sport === selectedSport && poolData.pool.day === selectedDate) {
+          const pool = poolData.pool;
+          log(`Pool sport='${pool.sport}', day='${pool.day}'`);
+          log(`Comparing to selectedSport='${selectedSport}', selectedDate='${selectedDate}'`);
+
+          if (
+            pool.sport.toLowerCase() === selectedSport.toLowerCase() &&
+            pool.day === selectedDate
+          ) {
             foundPool = poolData;
             log(`Match found at pool ID ${currentId}`);
             break;
