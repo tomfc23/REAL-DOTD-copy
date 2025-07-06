@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h2>Karma Tracker lanky</h2>
+  <h2>Karma Tracker lanky 2.0</h2>
 
   <label for="dateInput">Select Date:</label>
   <input type="date" id="dateInput" />
@@ -41,9 +41,7 @@
         return;
       }
 
-      // Start at 11:00:00 GMT of selected date
       const start = new Date(`${dateInput}T11:00:00.000Z`);
-      // End at 10:59:59.999 GMT the next day
       const end = new Date(start);
       end.setUTCDate(end.getUTCDate() + 1);
       end.setUTCHours(10, 59, 59, 999);
@@ -55,21 +53,35 @@
         const data = JSON.parse(response.data.contents);
 
         let total = 0;
+        let matchedCount = 0;
 
         if (Array.isArray(data.items)) {
           for (const item of data.items) {
             const itemDate = new Date(item.createdAt);
-            if (
-              itemDate >= start &&
-              itemDate <= end &&
-              typeof item.amount === 'number'
-            ) {
-              total += item.amount;
+            const amount = Number(item.amount);
+
+            const inRange = itemDate >= start && itemDate <= end;
+            const isValid = !isNaN(amount);
+
+            console.log({
+              createdAt: item.createdAt,
+              parsedDate: itemDate.toISOString(),
+              amount: item.amount,
+              parsedAmount: amount,
+              inRange,
+              included: inRange && isValid
+            });
+
+            if (isValid && inRange) {
+              total += amount;
+              matchedCount++;
             }
           }
         }
 
-        output.innerText = `Total Karma from ${start.toISOString().slice(0, 16).replace('T', ' ')} to ${end.toISOString().slice(0, 16).replace('T', ' ')} GMT: ${total}`;
+        output.innerText =
+          `Total Karma from ${start.toISOString().slice(0, 16).replace('T', ' ')} ` +
+          `to ${end.toISOString().slice(0, 16).replace('T', ' ')} GMT: ${total} (${matchedCount} items)`;
       } catch (err) {
         output.innerText = "Error fetching data.";
         console.error(err);
