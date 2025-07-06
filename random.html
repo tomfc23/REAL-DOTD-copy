@@ -1,4 +1,83 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pool Poll Viewer with Debug 1.0</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .controls {
+      margin-bottom: 20px;
+    }
+    .meta-info {
+      margin-bottom: 20px;
+    }
+    .game-block {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    .game-title {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    .poll-item {
+      margin-left: 20px;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    #log {
+      white-space: pre-wrap;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pool Poll Viewer</h1>
+
+  <div class="controls">
+    <label for="sport">Sport:</label>
+    <select id="sport">
+      <option value="mlb">MLB</option>
+      <option value="nba">NBA</option>
+      <option value="wnba">WNBA</option>
+      <option value="nhl">NHL</option>
+    </select>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+
+    <button onclick="findAndLoadPool()">Load Pool</button>
+  </div>
+
+  <div class="meta-info">
+    <div id="sport-info"></div>
+    <div id="game-count-info"></div>
+  </div>
+
+  <div id="poll-container">Waiting for input...</div>
+
+  <h3>Debug Log:</h3>
+  <div id="log"></div>
+
+ <script>
   // Hardcoded latest known pool ID
   let latestKnownPoolId = 1055; // ← Update this value manually as needed
 
@@ -110,3 +189,7 @@
     });
   }
 </script>
+
+
+</body>
+</html>
